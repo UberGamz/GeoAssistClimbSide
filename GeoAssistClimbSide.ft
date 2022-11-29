@@ -1,0 +1,10 @@
+﻿APPLICATION "_\geoassistclimbside_"
+FUNC_DLL "chooks\GeoAssistClimbSide.dll"
+RES_DLL "SAME"
+dnRES_NAME "_GeoAssistClimbSide.GeoAssistClimbSide"
+CATEGORY "Automation"
+FUNCTION NET "GeoAssistClimbSideRun"
+dnSPNG "Run16"
+dnLPNG"Run32"
+dnTIP "RunTip"
+END_FUNCTION
