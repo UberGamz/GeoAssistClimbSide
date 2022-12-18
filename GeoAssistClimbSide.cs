@@ -29,12 +29,16 @@ namespace _GeoAssistClimbSide
                 int cleanOut = 12;
                 int roughSurf = 138;
                 int finishSurf = 139;
+                var selectedCutChain = ChainManager.GetMultipleChains("Select Geometry");
+                DialogManager.AskForNumber("Enter Depth", ref depth);
+                DialogManager.AskForAngle("Enter Rough Angle", ref roughAngle);
+                DialogManager.AskForAngle("Enter Finish Angle", ref finishAngle);
                 SurfaceDraftParams roughSurfaceDraftParams = new SurfaceDraftParams
                 {
                     draftMethod = SurfaceDraftParams.DraftMethod.Length,
                     geometryType = SurfaceDraftParams.GeometryType.Surface,
                     length = depth,
-                    angle = Mastercam.Math.VectorManager.RadiansToDegrees(roughAngle),
+                    angle = Mastercam.Math.VectorManager.RadiansToDegrees(-roughAngle),
                     draftDirection = SurfaceDraftParams.DraftDirection.Defined
                 };
                 SurfaceDraftParams finishSurfaceDraftParams = new SurfaceDraftParams
@@ -42,15 +46,13 @@ namespace _GeoAssistClimbSide
                     draftMethod = SurfaceDraftParams.DraftMethod.Length,
                     geometryType = SurfaceDraftParams.GeometryType.Surface,
                     length = depth,
-                    angle = Mastercam.Math.VectorManager.RadiansToDegrees(finishAngle),
+                    angle = Mastercam.Math.VectorManager.RadiansToDegrees(-finishAngle),
                     draftDirection = SurfaceDraftParams.DraftDirection.Defined
                 };
-                var selectedCutChain = ChainManager.GetMultipleChains("Select Geometry");
-                DialogManager.AskForNumber("Enter Depth", ref depth);
-                DialogManager.AskForAngle("Enter Rough Angle", ref roughAngle);
-                DialogManager.AskForAngle("Enter Finish Angle", ref finishAngle);
+
                 foreach (var chain in selectedCutChain)
                 {
+                    chain.Direction = ChainDirectionType.Clockwise;
                     var chainGeo = ChainManager.GetGeometryInChain(chain);
                     foreach (var entity in chainGeo)
                     {
@@ -63,7 +65,8 @@ namespace _GeoAssistClimbSide
                 }
                 foreach (var chain in selectedCutChain)
                 {
-                    var mainGeoSide1 = chain.OffsetChain2D(OffsetSideType.Left, .002, OffsetRollCornerType.None, .5, false, .005, false);
+                    chain.Direction = ChainDirectionType.Clockwise;
+                    var mainGeoSide1 = chain.OffsetChain2D(OffsetSideType.Right, .002, OffsetRollCornerType.None, .5, false, .005, false);
                     var mainGeoResult = SearchManager.GetResultGeometry();
                     foreach (var entity in mainGeoResult)
                     {
@@ -115,6 +118,7 @@ namespace _GeoAssistClimbSide
                     var thisChain10 = ChainManager.ChainGeometry(levelTenGeo);
                     foreach (var draftChain10 in thisChain10)
                     {
+                        draftChain10.Direction = ChainDirectionType.Clockwise;
                         var draftSurface10 = SurfaceDraftInterop.CreateDrafts(draftChain10, roughSurfaceDraftParams, false, 1);
                         foreach (var surface10 in draftSurface10)
                         {
@@ -128,7 +132,7 @@ namespace _GeoAssistClimbSide
                     GraphicsManager.ClearColors(new GroupSelectionMask(true));
                     SelectionManager.UnselectAllGeometry();
                     ///////////////////////////////
-                    var cleanOutSide1 = chain.OffsetChain2D(OffsetSideType.Left, .0025, OffsetRollCornerType.None, .5, false, .005, false);
+                    var cleanOutSide1 = chain.OffsetChain2D(OffsetSideType.Right, .0025, OffsetRollCornerType.None, .5, false, .005, false);
                     var cleanOutResult = SearchManager.GetResultGeometry();
                     foreach (var entity in cleanOutResult)
                     {
@@ -172,7 +176,7 @@ namespace _GeoAssistClimbSide
                     GraphicsManager.ClearColors(new GroupSelectionMask(true));
                     SelectionManager.UnselectAllGeometry();
                     ////////////////////////////////
-                    var finishSurfSide1 = chain.OffsetChain2D(OffsetSideType.Left, .0005, OffsetRollCornerType.None, .5, false, .005, false);
+                    var finishSurfSide1 = chain.OffsetChain2D(OffsetSideType.Right, .0005, OffsetRollCornerType.None, .5, false, .005, false);
                     var finishSurfResult = SearchManager.GetResultGeometry();
                     foreach (var entity in finishSurfResult)
                     {
@@ -223,7 +227,9 @@ namespace _GeoAssistClimbSide
                     var level139Geo = SearchManager.GetSelectedGeometry();
                     var thisChain139 = ChainManager.ChainGeometry(level139Geo);
                     foreach (var draftChain139 in thisChain139)
+
                     {
+                        draftChain139.Direction = ChainDirectionType.Clockwise;
                         var draftSurface139 = SurfaceDraftInterop.CreateDrafts(draftChain139, finishSurfaceDraftParams, false, 1);
                         foreach (var surface139 in draftSurface139)
                         {
