@@ -8,6 +8,8 @@ using Mastercam.Database.Interop;
 using Mastercam.Curves;
 using Mastercam.Math;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
 
 namespace _GeoAssistClimbSide
 {
@@ -17,11 +19,198 @@ namespace _GeoAssistClimbSide
         {
             void offsetCutchain()
             {
-                var depth = -0.100;
-                var roughAngle = 15.0;
-                var finishAngle = 20.0;
-                var levelTenList = new List<int>();
-                var level139List = new List<int>();
+                Chain chainFlipperCW(Chain inChain)
+                {
+                    inChain.Direction = ChainDirectionType.Clockwise;
+                    var firstGeo = 0;
+                    var secondGeo = 0;
+                    var step = 0;
+                    var tempPoint = new Point3D(0, 0, 0);
+                    var tempAngle = 0.0;
+                    var chainGeo = ChainManager.GetGeometryInChain(inChain);
+                    if (step == 0)
+                    {
+                        firstGeo = chainGeo[0].GetEntityID();
+                        step = 1;
+                    }
+                    if (step == 1)
+                    {
+                        for (var i = 1; i < chainGeo.Length; i++)
+                        {
+                            secondGeo = chainGeo[i].GetEntityID();
+                            var firstGeoTemp = Geometry.RetrieveEntity(firstGeo);
+                            var secondGeoTemp = Geometry.RetrieveEntity(secondGeo);
+                            if (firstGeoTemp is LineGeometry line1)
+                            {
+                                if (secondGeoTemp is LineGeometry line2)
+                                {
+                                    var firstEndPoint = line1.EndPoint2;
+                                    var secondStartPoint = line2.EndPoint1;
+                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
+                                    {
+                                        tempPoint = line2.Data.Point1;
+                                        line2.Data.Point1 = line2.Data.Point2;
+                                        line2.Data.Point2 = tempPoint;
+                                        line2.Selected = false;
+                                        line2.Commit();
+                                    }
+                                }
+                                if (secondGeoTemp is ArcGeometry arc2)
+                                {
+                                    var firstEndPoint = line1.EndPoint2;
+                                    var secondStartPoint = arc2.EndPoint1;
+                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
+                                    {
+                                        tempAngle = arc2.Data.StartAngleDegrees;
+                                        arc2.Data.StartAngleDegrees = arc2.Data.EndAngleDegrees;
+                                        arc2.Data.EndAngleDegrees = tempAngle;
+                                        arc2.Selected = false;
+                                        arc2.Commit();
+                                    }
+                                }
+                            }
+                            if (firstGeoTemp is ArcGeometry arc1)
+                            {
+                                if (secondGeoTemp is LineGeometry line2)
+                                {
+                                    var firstEndPoint = arc1.EndPoint2;
+                                    var secondStartPoint = line2.EndPoint1;
+                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
+                                    {
+                                        tempPoint = line2.Data.Point1;
+                                        line2.Data.Point1 = line2.Data.Point2;
+                                        line2.Data.Point2 = tempPoint;
+                                        line2.Selected = false;
+                                        line2.Commit();
+                                    }
+                                }
+                                if (secondGeoTemp is ArcGeometry arc2)
+                                {
+                                    var firstEndPoint = arc1.EndPoint2;
+                                    var secondStartPoint = arc2.EndPoint1;
+                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
+                                    {
+                                        tempAngle = arc2.Data.StartAngleDegrees;
+                                        arc2.Data.StartAngleDegrees = arc2.Data.EndAngleDegrees;
+                                        arc2.Data.EndAngleDegrees = tempAngle;
+                                        arc2.Selected = false;
+                                        arc2.Commit();
+                                    }
+                                }
+                            }
+                            firstGeo = chainGeo[i].GetEntityID();
+                            //Geometry.RetrieveEntity(firstGeo).Retrieve();
+                        }
+                    }
+                    var tempChainGeo = ChainManager.GetGeometryInChain(inChain);
+                    for (var i = 0; i < tempChainGeo.Length; i++)
+                    {
+                        tempChainGeo[i].Retrieve();
+                    }
+                    return inChain;
+                }
+                Chain chainFlipperCCW(Chain inChain)
+                {
+                    inChain.Direction = ChainDirectionType.CounterClockwise;
+                    var firstGeo = 0;
+                    var secondGeo = 0;
+                    var step = 0;
+                    var tempPoint = new Point3D(0, 0, 0);
+                    var tempAngle = 0.0;
+                    var chainGeo = ChainManager.GetGeometryInChain(inChain);
+                    if (step == 0)
+                    {
+                        firstGeo = chainGeo[0].GetEntityID();
+                        step = 1;
+                    }
+                    if (step == 1)
+                    {
+                        for (var i = 1; i < chainGeo.Length; i++)
+                        {
+                            secondGeo = chainGeo[i].GetEntityID();
+                            var firstGeoTemp = Geometry.RetrieveEntity(firstGeo);
+                            var secondGeoTemp = Geometry.RetrieveEntity(secondGeo);
+                            if (firstGeoTemp is LineGeometry line1)
+                            {
+                                if (secondGeoTemp is LineGeometry line2)
+                                {
+                                    var firstEndPoint = line1.EndPoint1;
+                                    var secondStartPoint = line2.EndPoint2;
+                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
+                                    {
+                                        tempPoint = line2.Data.Point2;
+                                        line2.Data.Point2 = line2.Data.Point1;
+                                        line2.Data.Point1 = tempPoint;
+                                        line2.Selected = false;
+                                        line2.Commit();
+                                    }
+                                }
+                                if (secondGeoTemp is ArcGeometry arc2)
+                                {
+                                    var firstEndPoint = line1.EndPoint1;
+                                    var secondStartPoint = arc2.EndPoint2;
+                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
+                                    {
+                                        tempAngle = arc2.Data.EndAngleDegrees;
+                                        arc2.Data.EndAngleDegrees = arc2.Data.StartAngleDegrees;
+                                        arc2.Data.StartAngleDegrees = tempAngle;
+                                        arc2.Selected = false;
+                                        arc2.Commit();
+                                    }
+                                }
+                            }
+                            if (firstGeoTemp is ArcGeometry arc1)
+                            {
+                                if (secondGeoTemp is LineGeometry line2)
+                                {
+                                    var firstEndPoint = arc1.EndPoint1;
+                                    var secondStartPoint = line2.EndPoint2;
+                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
+                                    {
+                                        tempPoint = line2.Data.Point2;
+                                        line2.Data.Point2 = line2.Data.Point1;
+                                        line2.Data.Point1 = tempPoint;
+                                        line2.Selected = false;
+                                        line2.Commit();
+                                    }
+                                }
+                                if (secondGeoTemp is ArcGeometry arc2)
+                                {
+                                    var firstEndPoint = arc1.EndPoint1;
+                                    var secondStartPoint = arc2.EndPoint2;
+                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
+                                    {
+                                        tempAngle = arc2.Data.EndAngleDegrees;
+                                        arc2.Data.EndAngleDegrees = arc2.Data.StartAngleDegrees;
+                                        arc2.Data.StartAngleDegrees = tempAngle;
+                                        arc2.Selected = false;
+                                        arc2.Commit();
+                                    }
+                                }
+                            }
+                            firstGeo = chainGeo[i].GetEntityID();
+                            //Geometry.RetrieveEntity(firstGeo).Retrieve();
+                        }
+                    }
+                    var tempChainGeo = ChainManager.GetGeometryInChain(inChain);
+                    for (var i = 0; i < tempChainGeo.Length; i++)
+                    {
+                        tempChainGeo[i].Retrieve();
+                    }
+                    return inChain;
+                }
+                var levelTenList1 = new List<Geometry>();
+                var level139List1 = new List<Geometry>();
+                var levelTenList2 = new List<Geometry>();
+                var level139List2 = new List<Geometry>();
+                var chainList1 = new List<Chain>();
+                var chainList2 = new List<Chain>();
+                var chainList3 = new List<Chain>();
+                var chainList4 = new List<Chain>();
+                var chainList5 = new List<Chain>();
+                var chainList6 = new List<Chain>();
+                var testList = new List<Geometry>();
+
                 SelectionManager.UnselectAllGeometry();
                 LevelsManager.RefreshLevelsManager();
                 GraphicsManager.Repaint(true);
@@ -29,6 +218,9 @@ namespace _GeoAssistClimbSide
                 int cleanOut = 12;
                 int roughSurf = 138;
                 int finishSurf = 139;
+                var depth = -0.100;
+                var roughAngle = 15.0;
+                var finishAngle = 20.0;
                 var selectedCutChain = ChainManager.GetMultipleChains("Select Geometry");
                 if (selectedCutChain == null)
                 {
@@ -49,7 +241,7 @@ namespace _GeoAssistClimbSide
                 {
                     return;
                 }
-                SurfaceDraftParams roughSurfaceDraftParams = new SurfaceDraftParams
+                SurfaceDraftParams roughSurfaceDraftParams1 = new SurfaceDraftParams
                 {
                     draftMethod = SurfaceDraftParams.DraftMethod.Length,
                     geometryType = SurfaceDraftParams.GeometryType.Surface,
@@ -57,7 +249,7 @@ namespace _GeoAssistClimbSide
                     angle = Mastercam.Math.VectorManager.RadiansToDegrees(-roughAngle),
                     draftDirection = SurfaceDraftParams.DraftDirection.Defined
                 };
-                SurfaceDraftParams finishSurfaceDraftParams = new SurfaceDraftParams
+                SurfaceDraftParams finishSurfaceDraftParams1 = new SurfaceDraftParams
                 {
                     draftMethod = SurfaceDraftParams.DraftMethod.Length,
                     geometryType = SurfaceDraftParams.GeometryType.Surface,
@@ -65,200 +257,790 @@ namespace _GeoAssistClimbSide
                     angle = Mastercam.Math.VectorManager.RadiansToDegrees(-finishAngle),
                     draftDirection = SurfaceDraftParams.DraftDirection.Defined
                 };
-
+                SurfaceDraftParams roughSurfaceDraftParams2 = new SurfaceDraftParams
+                {
+                    draftMethod = SurfaceDraftParams.DraftMethod.Length,
+                    geometryType = SurfaceDraftParams.GeometryType.Surface,
+                    length = depth,
+                    angle = Mastercam.Math.VectorManager.RadiansToDegrees(roughAngle),
+                    draftDirection = SurfaceDraftParams.DraftDirection.Defined
+                };
+                SurfaceDraftParams finishSurfaceDraftParams2 = new SurfaceDraftParams
+                {
+                    draftMethod = SurfaceDraftParams.DraftMethod.Length,
+                    geometryType = SurfaceDraftParams.GeometryType.Surface,
+                    length = depth,
+                    angle = Mastercam.Math.VectorManager.RadiansToDegrees(finishAngle),
+                    draftDirection = SurfaceDraftParams.DraftDirection.Defined
+                };
+                ChainManager.ChainTolerance = 0.001;
                 foreach (var chain in selectedCutChain)
                 {
-                    chain.Direction = ChainDirectionType.Clockwise;
-                    var chainGeo = ChainManager.GetGeometryInChain(chain);
-                    foreach (var entity in chainGeo)
-                    {
-                        if (entity is SplineGeometry || entity is NURBSCurveGeometry)
-                        {
-                            Mastercam.IO.DialogManager.Error("Spline Found", "Fix Splines and try again");
-                            return;
-                        }
-                    }
+                    if (chain.IsClosed) { continue; }
+                    else { DialogManager.Error("The chain is not closed, try again", "Chain Not Closed Error");
+                        return; }
                 }
+
+                //Check for splines
+                foreach (var chain in selectedCutChain)
+                    {
+                        chain.Direction = ChainDirectionType.Clockwise;
+                        var chainGeos = ChainManager.GetGeometryInChain(chain);
+                        foreach (var entity in chainGeos)
+                        {
+                            if (entity is SplineGeometry || entity is NURBSCurveGeometry)
+                            {
+                                Mastercam.IO.DialogManager.Error("Spline Found", "Fix Splines and try again");
+                                return;
+                            }
+                        }
+                    }
                 foreach (var chain in selectedCutChain)
                 {
-                    chain.Direction = ChainDirectionType.Clockwise;
-                    var mainGeoSide1 = chain.OffsetChain2D(OffsetSideType.Right, .002, OffsetRollCornerType.None, .5, false, .005, false);
-                    var mainGeoResult = SearchManager.GetResultGeometry();
-                    foreach (var entity in mainGeoResult)
-                    {
-                        entity.Color = mainGeo;
-                        entity.Level = mainGeo;
-                        entity.Selected = false;
-                        levelTenList.Add(entity.GetEntityID());
-                        entity.Commit();
-                    }
-                    foreach (var entity1 in mainGeoResult)
-                    {
-                        if (entity1 is LineGeometry line1)
-                        {
-                            foreach (var entity2 in mainGeoResult)
-                            {
-                                if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
-                                {
-                                    if ((VectorManager.Distance(line1.EndPoint1, line2.EndPoint1) <= 0.001)
-                                        ||
-                                        (VectorManager.Distance(line1.EndPoint1, line2.EndPoint2) <= 0.001)
-                                        ||
-                                        (VectorManager.Distance(line1.EndPoint2, line2.EndPoint2) <= 0.001)
-                                        ||
-                                        (VectorManager.Distance(line1.EndPoint2, line2.EndPoint1) <= 0.001))
-                                    {
-                                        var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, line2, 0.0020, mainGeo, mainGeo, true);
-                                        if (newFillet != null)
-                                        {
-                                            newFillet.Retrieve();
-                                            newFillet.Commit();
-                                            levelTenList.Add(newFillet.GetEntityID());
-                                        }
-                                        line1.Retrieve();
-                                        line1.Commit();
-                                        line2.Retrieve();
-                                        line2.Commit();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    foreach (var entity in levelTenList)
-                    {
-                        var entityGeo = Geometry.RetrieveEntity(entity);
-                        entityGeo.Selected = true;
-                        entityGeo.Commit();
-                    }
-                    var levelTenGeo = SearchManager.GetSelectedGeometry();
-                    var thisChain10 = ChainManager.ChainGeometry(levelTenGeo);
-                    foreach (var draftChain10 in thisChain10)
-                    {
-                        draftChain10.Direction = ChainDirectionType.Clockwise;
-                        var draftSurface10 = SurfaceDraftInterop.CreateDrafts(draftChain10, roughSurfaceDraftParams, false, 1);
-                        foreach (var surface10 in draftSurface10)
-                        {
-                            if (Geometry.RetrieveEntity(surface10) is Geometry roughDraftSurface10)
-                            {
-                                roughDraftSurface10.Level = roughSurf;
-                                roughDraftSurface10.Commit();
-                            }
-                        }
-                    }
-                    GraphicsManager.ClearColors(new GroupSelectionMask(true));
+                    chainList1.Add(chain);
+                    chainList2.Add(chain);
+                    chainList3.Add(chain);
+                    chainList4.Add(chain);
+                    chainList5.Add(chain);
+                    chainList6.Add(chain);
                     SelectionManager.UnselectAllGeometry();
-                    ///////////////////////////////
-                    var cleanOutSide1 = chain.OffsetChain2D(OffsetSideType.Right, .0025, OffsetRollCornerType.None, .5, false, .005, false);
-                    var cleanOutResult = SearchManager.GetResultGeometry();
-                    foreach (var entity in cleanOutResult)
-                    {
-                        entity.Level = cleanOut;
-                        entity.Color = cleanOut;
-                        entity.Selected = false;
-                        entity.Commit();
-                    }
-                    foreach (var entity1 in cleanOutResult)
-                    {
-                        if (entity1 is LineGeometry line1)
-                        {
-                            foreach (var entity2 in cleanOutResult)
-                            {
-                                if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
-                                {
-                                    if ((VectorManager.Distance(line1.EndPoint1, line2.EndPoint1) <= 0.001)
-                                        ||
-                                        (VectorManager.Distance(line1.EndPoint1, line2.EndPoint2) <= 0.001)
-                                        ||
-                                        (VectorManager.Distance(line1.EndPoint2, line2.EndPoint2) <= 0.001)
-                                        ||
-                                        (VectorManager.Distance(line1.EndPoint2, line2.EndPoint1) <= 0.001))
-                                    {
-                                        var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, line2, 0.0025, cleanOut, cleanOut, true);
-                                        if (newFillet != null)
-                                        {
-                                            newFillet.Retrieve();
-                                            newFillet.Commit();
-                                            levelTenList.Add(newFillet.GetEntityID());
-                                        }
-                                        line1.Retrieve();
-                                        line1.Commit();
-                                        line2.Retrieve();
-                                        line2.Commit();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    GraphicsManager.ClearColors(new GroupSelectionMask(true));
-                    SelectionManager.UnselectAllGeometry();
-                    ////////////////////////////////
-                    var finishSurfSide1 = chain.OffsetChain2D(OffsetSideType.Right, .0005, OffsetRollCornerType.None, .5, false, .005, false);
-                    var finishSurfResult = SearchManager.GetResultGeometry();
-                    foreach (var entity in finishSurfResult)
-                    {
-                        entity.Color = finishSurf;
-                        entity.Level = finishSurf;
-                        entity.Selected = false;
-                        level139List.Add(entity.GetEntityID());
-                        entity.Commit();
-                    }
-                    foreach (var entity1 in finishSurfResult)
-                    {
-                        if (entity1 is LineGeometry line1)
-                        {
-                            foreach (var entity2 in finishSurfResult)
-                            {
-                                if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
-                                {
-                                    if ((VectorManager.Distance(line1.EndPoint1, line2.EndPoint1) <= 0.001)
-                                        ||
-                                        (VectorManager.Distance(line1.EndPoint1, line2.EndPoint2) <= 0.001)
-                                        ||
-                                        (VectorManager.Distance(line1.EndPoint2, line2.EndPoint2) <= 0.001)
-                                        ||
-                                        (VectorManager.Distance(line1.EndPoint2, line2.EndPoint1) <= 0.001))
-                                    {
-                                        var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, line2, 0.0005, finishSurf, finishSurf, true);
-                                        if (newFillet != null)
-                                        {
-                                            newFillet.Retrieve();
-                                            newFillet.Commit();
-                                            level139List.Add(newFillet.GetEntityID());
-                                        }
-                                        line1.Retrieve();
-                                        line1.Commit();
-                                        line2.Retrieve();
-                                        line2.Commit();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    foreach (var entity in level139List)
-                    {
-                        var entityGeo = Geometry.RetrieveEntity(entity);
-                        entityGeo.Selected = true;
-                        entityGeo.Commit();
-                    }
-                    var level139Geo = SearchManager.GetSelectedGeometry();
-                    var thisChain139 = ChainManager.ChainGeometry(level139Geo);
-                    foreach (var draftChain139 in thisChain139)
+                }
+                //Thread thread1 = new Thread(new ThreadStart(chain10Side1));
+                //Thread thread2 = new Thread(new ThreadStart(chain10Side2));
+                //Thread thread3 = new Thread(new ThreadStart(chain12Side1));
+                //Thread thread4 = new Thread(new ThreadStart(chain12Side2));
+                //Thread thread5 = new Thread(new ThreadStart(chain139Side1));
+                //Thread thread6 = new Thread(new ThreadStart(chain139Side2));
+                //thread1.Start();
+                //thread2.Start();
+                //thread3.Start();
+                //thread4.Start();
+                //thread5.Start();
+                //thread6.Start();
+                //chain10Side1();
+                chain10Side2();
+                //chain12Side1();
+                chain12Side2();
+                //chain139Side1();
+                chain139Side2();
 
+
+                //Chain level 10 side 1
+                void chain10Side1()
+                {
+                    foreach (var chain in chainList1)
                     {
-                        draftChain139.Direction = ChainDirectionType.Clockwise;
-                        var draftSurface139 = SurfaceDraftInterop.CreateDrafts(draftChain139, finishSurfaceDraftParams, false, 1);
-                        foreach (var surface139 in draftSurface139)
+                        chain.Direction = ChainDirectionType.Clockwise;
+                        var mainGeoSide2 = chain.OffsetChain2D(OffsetSideType.Right, .002, OffsetRollCornerType.None, .5, false, .005, false);
+                        var resultChainGeo = SearchManager.GetResultGeometry();
+                        foreach (var entity in resultChainGeo)
                         {
-                            if (Geometry.RetrieveEntity(surface139) is Geometry finishDraftSurface139)
+                            entity.Color = mainGeo;
+                            entity.Level = mainGeo;
+                            entity.Selected = false;
+                            levelTenList2.Add(entity);
+                            entity.Commit();
+                        }
+                        foreach (var entity1 in resultChainGeo)
+                        {
+                            if (entity1 is LineGeometry line1)
                             {
-                                finishDraftSurface139.Level = finishSurf;
-                                finishDraftSurface139.Commit();
+                                foreach (var entity2 in resultChainGeo)
+                                {
+                                    if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                    {
+                                        if ((VectorManager.Distance(line1.EndPoint1, line2.EndPoint1) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint1, line2.EndPoint2) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint2, line2.EndPoint2) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint2, line2.EndPoint1) <= 0.0001))
+                                        {
+                                            var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, line2, 0.0020, mainGeo, mainGeo, true);
+                                            if (newFillet != null)
+                                            {
+                                                newFillet.Retrieve();
+                                                newFillet.Commit();
+                                                levelTenList2.Add(newFillet);
+                                            }
+                                            line1.Retrieve();
+                                            line1.Commit();
+                                            line2.Retrieve();
+                                            line2.Commit();
+                                        }
+                                    }
+                                    if (entity2 is ArcGeometry arc2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                    {
+                                        if (arc2.Data.Radius > 0.002) { 
+
+                                            if ((VectorManager.Distance(line1.EndPoint1, arc2.EndPoint1) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint1, arc2.EndPoint2) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint2) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint1) <= 0.0001))
+                                            {
+                                                var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, arc2, 0.0020, mainGeo, mainGeo, true);
+                                                if (newFillet != null)
+                                                {
+                                                    newFillet.Retrieve();
+                                                    newFillet.Commit();
+                                                    levelTenList2.Add(newFillet);
+                                                }
+                                                line1.Retrieve();
+                                                line1.Commit();
+                                                arc2.Retrieve();
+                                                arc2.Commit();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (entity1 is ArcGeometry arc1)
+                            {
+                                if (arc1.Data.Radius > 0.002)
+                                {
+
+                                    foreach (var entity2 in resultChainGeo)
+                                    {
+                                        if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                        {
+                                            if ((VectorManager.Distance(arc1.EndPoint1, line2.EndPoint1) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint1, line2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint1) <= 0.0001))
+                                            {
+                                                var newFillet = GeometryManipulationManager.FilletTwoCurves(arc1, line2, 0.0020, mainGeo, mainGeo, true);
+                                                if (newFillet != null)
+                                                {
+                                                    newFillet.Retrieve();
+                                                    newFillet.Commit();
+                                                    levelTenList2.Add(newFillet);
+                                                }
+                                                arc1.Retrieve();
+                                                arc1.Commit();
+                                                line2.Retrieve();
+                                                line2.Commit();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        var thisChain102 = ChainManager.ChainGeometry(levelTenList2.ToArray());
+                        foreach (var draftChain10 in thisChain102)
+                        {
+                            draftChain10.Direction = ChainDirectionType.Clockwise;
+                            var draftSurface10 = SurfaceDraftInterop.CreateDrafts(draftChain10, roughSurfaceDraftParams1, false, 1);
+                            foreach (var surface10 in draftSurface10)
+                            {
+                                if (Geometry.RetrieveEntity(surface10) is Geometry roughDraftSurface10)
+                                {
+                                    roughDraftSurface10.Level = roughSurf;
+                                    roughDraftSurface10.Commit();
+                                }
                             }
                         }
                     }
                     GraphicsManager.ClearColors(new GroupSelectionMask(true));
                     SelectionManager.UnselectAllGeometry();
-                    ////////////////////////////////
+                }
+                //chain level 10 side 2
+                void chain10Side2()
+                {
+                    foreach (var chain in chainList2)
+                    {
+                        chain.Direction = ChainDirectionType.Clockwise;
+                        var mainGeoSide2 = chain.OffsetChain2D(OffsetSideType.Left, .002, OffsetRollCornerType.All, .5, false, .005, false);
+                        var resultChainGeo = SearchManager.GetResultGeometry();
+                        foreach (var entity in resultChainGeo)
+                        {
+                            entity.Color = mainGeo;
+                            entity.Level = mainGeo;
+                            entity.Selected = false;
+                            levelTenList2.Add(entity);
+                            entity.Commit();
+                        }
+                        foreach (var entity1 in resultChainGeo)
+                        {
+                            if (entity1 is LineGeometry line1)
+                            {
+                                foreach (var entity2 in resultChainGeo)
+                                {
+                                    if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                    {
+                                        if ((VectorManager.Distance(line1.EndPoint1, line2.EndPoint1) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint1, line2.EndPoint2) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint2, line2.EndPoint2) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint2, line2.EndPoint1) <= 0.0001))
+                                        {
+                                            var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, line2, 0.0020, mainGeo, mainGeo, true);
+                                            if (newFillet != null)
+                                            {
+                                                newFillet.Retrieve();
+                                                newFillet.Commit();
+                                                levelTenList2.Add(newFillet);
+                                            }
+                                            line1.Retrieve();
+                                            line1.Commit();
+                                            line2.Retrieve();
+                                            line2.Commit();
+                                        }
+                                    }
+                                    if (entity2 is ArcGeometry arc2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                    {
+                                        if (arc2.Data.Radius > 0.002)
+                                        {
+                                            if ((VectorManager.Distance(line1.EndPoint1, arc2.EndPoint1) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint1, arc2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint1) <= 0.0001))
+                                            {
+                                                var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, arc2, 0.0020, mainGeo, mainGeo, true);
+                                                if (newFillet != null)
+                                                {
+                                                    newFillet.Retrieve();
+                                                    newFillet.Commit();
+                                                    levelTenList2.Add(newFillet);
+                                                }
+                                                line1.Retrieve();
+                                                line1.Commit();
+                                                arc2.Retrieve();
+                                                arc2.Commit();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (entity1 is ArcGeometry arc1)
+                            {
+                                if (arc1.Data.Radius > 0.002)
+                                {
+
+                                    foreach (var entity2 in resultChainGeo)
+                                    {
+                                        if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                        {
+                                            if ((VectorManager.Distance(arc1.EndPoint1, line2.EndPoint1) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint1, line2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint1) <= 0.0001))
+                                            {
+                                                var newFillet = GeometryManipulationManager.FilletTwoCurves(arc1, line2, 0.0020, mainGeo, mainGeo, true);
+                                                if (newFillet != null)
+                                                {
+                                                    newFillet.Retrieve();
+                                                    newFillet.Commit();
+                                                    levelTenList2.Add(newFillet);
+                                                }
+                                                arc1.Retrieve();
+                                                arc1.Commit();
+                                                line2.Retrieve();
+                                                line2.Commit();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        var thisChain102 = ChainManager.ChainGeometry(levelTenList2.ToArray());
+                        foreach (var draftChain10 in thisChain102)
+                        {
+                            draftChain10.Direction = ChainDirectionType.Clockwise;
+                            var draftSurface10 = SurfaceDraftInterop.CreateDrafts(draftChain10, roughSurfaceDraftParams2, false, 1);
+                            foreach (var surface10 in draftSurface10)
+                            {
+                                if (Geometry.RetrieveEntity(surface10) is Geometry roughDraftSurface10)
+                                {
+                                    roughDraftSurface10.Level = roughSurf;
+                                    roughDraftSurface10.Commit();
+                                }
+                            }
+                        }
+                    }
+                    GraphicsManager.ClearColors(new GroupSelectionMask(true));
+                    SelectionManager.UnselectAllGeometry();
+                }
+                //chain level 12 side 1
+                void chain12Side1()
+                {
+                    foreach (var chain in chainList3)
+                    {
+                        var cleanOutSide2 = chain.OffsetChain2D(OffsetSideType.Right, .0025, OffsetRollCornerType.None, .5, false, .005, false);
+                        var resultChainGeo = SearchManager.GetResultGeometry();
+                        foreach (var entity in resultChainGeo)
+                        {
+                            entity.Color = cleanOut;
+                            entity.Level = cleanOut;
+                            entity.Selected = false;
+                            entity.Commit();
+                        }
+                        foreach (var entity1 in resultChainGeo)
+                        {
+                            if (entity1 is LineGeometry line1)
+                            {
+                                foreach (var entity2 in resultChainGeo)
+                                {
+                                    if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                    {
+                                        if ((VectorManager.Distance(line1.EndPoint1, line2.EndPoint1) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint1, line2.EndPoint2) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint2, line2.EndPoint2) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint2, line2.EndPoint1) <= 0.0001))
+                                        {
+                                            var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, line2, 0.0025, cleanOut, cleanOut, true);
+                                            if (newFillet != null)
+                                            {
+                                                newFillet.Retrieve();
+                                                newFillet.Commit();
+                                            }
+                                            line1.Retrieve();
+                                            line1.Commit();
+                                            line2.Retrieve();
+                                            line2.Commit();
+                                        }
+                                    }
+                                    if (entity2 is ArcGeometry arc2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                    {
+                                        if (arc2.Data.Radius > 0.0025)
+                                        {
+
+                                            if ((VectorManager.Distance(line1.EndPoint1, arc2.EndPoint1) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint1, arc2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint1) <= 0.0001))
+                                            {
+                                                var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, arc2, 0.0025, cleanOut, cleanOut, true);
+                                                if (newFillet != null)
+                                                {
+                                                    newFillet.Retrieve();
+                                                    newFillet.Commit();
+                                                }
+                                                line1.Retrieve();
+                                                line1.Commit();
+                                                arc2.Retrieve();
+                                                arc2.Commit();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (entity1 is ArcGeometry arc1)
+                            {
+                                if (arc1.Data.Radius > 0.0025)
+                                {
+
+                                    foreach (var entity2 in resultChainGeo)
+                                    {
+                                        if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                        {
+                                            if ((VectorManager.Distance(arc1.EndPoint1, line2.EndPoint1) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint1, line2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint1) <= 0.0001))
+                                            {
+                                                var newFillet = GeometryManipulationManager.FilletTwoCurves(arc1, line2, 0.0025, cleanOut, cleanOut, true);
+                                                if (newFillet != null)
+                                                {
+                                                    newFillet.Retrieve();
+                                                    newFillet.Commit();
+                                                }
+                                                arc1.Retrieve();
+                                                arc1.Commit();
+                                                line2.Retrieve();
+                                                line2.Commit();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    GraphicsManager.ClearColors(new GroupSelectionMask(true));
+                    SelectionManager.UnselectAllGeometry();
+                }
+                //chain level 12 side 2
+                void chain12Side2()
+                {
+                    foreach (var chain in chainList4)
+                    {
+                        var cleanOutSide2 = chain.OffsetChain2D(OffsetSideType.Left, .0025, OffsetRollCornerType.All, .5, false, .005, false);
+                        var resultChainGeo = SearchManager.GetResultGeometry();
+                        foreach (var entity in resultChainGeo)
+                        {
+                            entity.Color = cleanOut;
+                            entity.Level = cleanOut;
+                            entity.Selected = false;
+                            entity.Commit();
+                        }
+                        foreach (var entity1 in resultChainGeo)
+                        {
+                            if (entity1 is LineGeometry line1)
+                            {
+                                foreach (var entity2 in resultChainGeo)
+                                {
+                                    if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                    {
+                                        if ((VectorManager.Distance(line1.EndPoint1, line2.EndPoint1) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint1, line2.EndPoint2) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint2, line2.EndPoint2) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint2, line2.EndPoint1) <= 0.0001))
+                                        {
+                                            var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, line2, 0.0025, cleanOut, cleanOut, true);
+                                            if (newFillet != null)
+                                            {
+                                                newFillet.Retrieve();
+                                                newFillet.Commit();
+                                            }
+                                            line1.Retrieve();
+                                            line1.Commit();
+                                            line2.Retrieve();
+                                            line2.Commit();
+                                        }
+                                    }
+                                    if (entity2 is ArcGeometry arc2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                    {
+                                        if (arc2.Data.Radius > 0.0025)
+                                        {
+
+                                            if ((VectorManager.Distance(line1.EndPoint1, arc2.EndPoint1) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint1, arc2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint1) <= 0.0001))
+                                            {
+                                                var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, arc2, 0.0025, cleanOut, cleanOut, true);
+                                                if (newFillet != null)
+                                                {
+                                                    newFillet.Retrieve();
+                                                    newFillet.Commit();
+                                                }
+                                                line1.Retrieve();
+                                                line1.Commit();
+                                                arc2.Retrieve();
+                                                arc2.Commit();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (entity1 is ArcGeometry arc1)
+                            {
+                                if (arc1.Data.Radius > 0.0025)
+                                {
+
+                                    foreach (var entity2 in resultChainGeo)
+                                    {
+                                        if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                        {
+                                            if ((VectorManager.Distance(arc1.EndPoint1, line2.EndPoint1) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint1, line2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint1) <= 0.0001))
+                                            {
+                                                var newFillet = GeometryManipulationManager.FilletTwoCurves(arc1, line2, 0.0025, cleanOut, cleanOut, true);
+                                                if (newFillet != null)
+                                                {
+                                                    newFillet.Retrieve();
+                                                    newFillet.Commit();
+                                                }
+                                                arc1.Retrieve();
+                                                arc1.Commit();
+                                                line2.Retrieve();
+                                                line2.Commit();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    GraphicsManager.ClearColors(new GroupSelectionMask(true));
+                    SelectionManager.UnselectAllGeometry();
+                }
+                //Chain level 139 side 1
+                void chain139Side1()
+                {
+                    foreach (var chain in chainList5)
+                    {
+                        var finishSurfSide2 = chain.OffsetChain2D(OffsetSideType.Right, .0005, OffsetRollCornerType.None, .5, false, .005, false);
+                        var resultChainGeo = SearchManager.GetResultGeometry();
+                        foreach (var entity in resultChainGeo)
+                        {
+                            entity.Color = finishSurf;
+                            entity.Level = finishSurf;
+                            entity.Selected = false;
+                            level139List2.Add(entity);
+                            entity.Commit();
+                        }
+                        foreach (var entity1 in resultChainGeo)
+                        {
+                            if (entity1 is LineGeometry line1)
+                            {
+                                foreach (var entity2 in resultChainGeo)
+                                {
+                                    if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                    {
+                                        if ((VectorManager.Distance(line1.EndPoint1, line2.EndPoint1) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint1, line2.EndPoint2) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint2, line2.EndPoint2) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint2, line2.EndPoint1) <= 0.0001))
+                                        {
+                                            var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, line2, 0.0005, finishSurf, finishSurf, true);
+                                            if (newFillet != null)
+                                            {
+                                                newFillet.Retrieve();
+                                                newFillet.Commit();
+                                                level139List2.Add(newFillet);
+                                            }
+                                            line1.Retrieve();
+                                            line1.Commit();
+                                            line2.Retrieve();
+                                            line2.Commit();
+                                        }
+                                    }
+                                    if (entity2 is ArcGeometry arc2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                    {
+                                        if (arc2.Data.Radius > 0.0005)
+                                        {
+
+                                            if ((VectorManager.Distance(line1.EndPoint1, arc2.EndPoint1) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint1, arc2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint1) <= 0.0001))
+                                            {
+                                                var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, arc2, 0.0005, finishSurf, finishSurf, true);
+                                                if (newFillet != null)
+                                                {
+                                                    newFillet.Retrieve();
+                                                    newFillet.Commit();
+                                                    level139List2.Add(newFillet);
+                                                }
+                                                line1.Retrieve();
+                                                line1.Commit();
+                                                arc2.Retrieve();
+                                                arc2.Commit();
+                                            }
+                                        }
+                                    }
+                                }
+
+                            }
+                            if (entity1 is ArcGeometry arc1)
+                            {
+                                if (arc1.Data.Radius > 0.0005)
+                                {
+
+                                    foreach (var entity2 in resultChainGeo)
+                                    {
+                                        if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                        {
+                                            if ((VectorManager.Distance(arc1.EndPoint1, line2.EndPoint1) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint1, line2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint1) <= 0.0001))
+                                            {
+                                                var newFillet = GeometryManipulationManager.FilletTwoCurves(arc1, line2, 0.0005, finishSurf, finishSurf, true);
+                                                if (newFillet != null)
+                                                {
+                                                    newFillet.Retrieve();
+                                                    newFillet.Commit();
+                                                    level139List2.Add(newFillet);
+                                                }
+                                                arc1.Retrieve();
+                                                arc1.Commit();
+                                                line2.Retrieve();
+                                                line2.Commit();
+                                            }
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                        var thisChain1392 = ChainManager.ChainGeometry(level139List2.ToArray());
+                        foreach (var draftChain139 in thisChain1392)
+
+                        {
+                            draftChain139.Direction = ChainDirectionType.Clockwise;
+                            var draftSurface139 = SurfaceDraftInterop.CreateDrafts(draftChain139, finishSurfaceDraftParams1, false, 1);
+                            foreach (var surface139 in draftSurface139)
+                            {
+                                if (Geometry.RetrieveEntity(surface139) is Geometry finishDraftSurface139)
+                                {
+                                    finishDraftSurface139.Level = finishSurf;
+                                    finishDraftSurface139.Commit();
+                                }
+                            }
+                        }
+                    }
+                    GraphicsManager.ClearColors(new GroupSelectionMask(true));
+                    SelectionManager.UnselectAllGeometry();
+                }
+                //Chain level 139 side 2
+                void chain139Side2()
+                {
+                    foreach (var chain in chainList6)
+                    {
+                        var finishSurfSide2 = chain.OffsetChain2D(OffsetSideType.Left, .0005, OffsetRollCornerType.All, .5, false, .005, false);
+                        var resultChainGeo = SearchManager.GetResultGeometry();
+                        foreach (var entity in resultChainGeo)
+                        {
+                            entity.Color = finishSurf;
+                            entity.Level = finishSurf;
+                            entity.Selected = true;
+                            level139List2.Add(entity);
+                            entity.Commit();
+                        }
+                        foreach (var entity1 in resultChainGeo)
+                        {
+                            if (entity1 is LineGeometry line1)
+                            {
+                                foreach (var entity2 in resultChainGeo)
+                                {
+                                    if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                    {
+                                        if ((VectorManager.Distance(line1.EndPoint1, line2.EndPoint1) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint1, line2.EndPoint2) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint2, line2.EndPoint2) <= 0.0001)
+                                            ||
+                                            (VectorManager.Distance(line1.EndPoint2, line2.EndPoint1) <= 0.0001))
+                                        {
+                                            var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, line2, 0.0005, finishSurf, finishSurf, true);
+                                            if (newFillet != null)
+                                            {
+                                                newFillet.Retrieve();
+                                                newFillet.Commit();
+                                                level139List2.Add(newFillet);
+                                            }
+                                            line1.Retrieve();
+                                            line1.Commit();
+                                            line2.Retrieve();
+                                            line2.Commit();
+                                        }
+                                    }
+                                    if (entity2 is ArcGeometry arc2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                    {
+                                        if (arc2.Data.Radius > 0.0005)
+                                        {
+                                            if ((VectorManager.Distance(line1.EndPoint1, arc2.EndPoint1) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint1, arc2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint1) <= 0.0001))
+                                            {
+                                                var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, arc2, 0.0005, finishSurf, finishSurf, true);
+                                                if (newFillet != null)
+                                                {
+                                                    newFillet.Retrieve();
+                                                    newFillet.Commit();
+                                                    level139List2.Add(newFillet);
+                                                }
+                                                line1.Retrieve();
+                                                line1.Commit();
+                                                arc2.Retrieve();
+                                                arc2.Commit();
+                                            }
+                                        }
+                                    }
+                                }
+
+                            }
+                            if (entity1 is ArcGeometry arc1)
+                            {
+                                if (arc1.Data.Radius > 0.0005)
+                                {
+                                    foreach (var entity2 in resultChainGeo)
+                                    {
+                                        if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
+                                        {
+                                            if ((VectorManager.Distance(arc1.EndPoint1, line2.EndPoint1) <= 0.001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint1, line2.EndPoint2) <= 0.001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint2) <= 0.001)
+                                                ||
+                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint1) <= 0.001))
+                                            {
+                                                var newFillet = GeometryManipulationManager.FilletTwoCurves(arc1, line2, 0.0005, finishSurf, finishSurf, true);
+                                                if (newFillet != null)
+                                                {
+                                                    newFillet.Retrieve();
+                                                    newFillet.Commit();
+                                                    level139List2.Add(newFillet);
+                                                }
+                                                arc1.Retrieve();
+                                                arc1.Commit();
+                                                line2.Retrieve();
+                                                line2.Commit();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        var thisChain1392 = ChainManager.ChainGeometry(level139List2.ToArray());
+                        foreach (var draftChain139 in thisChain1392)
+
+                        {
+                            draftChain139.Direction = ChainDirectionType.Clockwise;
+                            var draftSurface139 = SurfaceDraftInterop.CreateDrafts(draftChain139, finishSurfaceDraftParams2, false, 1);
+                            foreach (var surface139 in draftSurface139)
+                            {
+                                if (Geometry.RetrieveEntity(surface139) is Geometry finishDraftSurface139)
+                                {
+                                    finishDraftSurface139.Level = finishSurf;
+                                    finishDraftSurface139.Commit();
+                                }
+                            }
+                        }
+                    }
+                    GraphicsManager.ClearColors(new GroupSelectionMask(true));
+                    SelectionManager.UnselectAllGeometry();
                 }
             }
             void deSelect()
