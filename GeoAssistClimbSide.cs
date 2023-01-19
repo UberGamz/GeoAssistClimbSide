@@ -19,186 +19,6 @@ namespace _GeoAssistClimbSide
         {
             void offsetCutchain()
             {
-                Chain chainFlipperCW(Chain inChain)
-                {
-                    inChain.Direction = ChainDirectionType.Clockwise;
-                    var firstGeo = 0;
-                    var secondGeo = 0;
-                    var step = 0;
-                    var tempPoint = new Point3D(0, 0, 0);
-                    var tempAngle = 0.0;
-                    var chainGeo = ChainManager.GetGeometryInChain(inChain);
-                    if (step == 0)
-                    {
-                        firstGeo = chainGeo[0].GetEntityID();
-                        step = 1;
-                    }
-                    if (step == 1)
-                    {
-                        for (var i = 1; i < chainGeo.Length; i++)
-                        {
-                            secondGeo = chainGeo[i].GetEntityID();
-                            var firstGeoTemp = Geometry.RetrieveEntity(firstGeo);
-                            var secondGeoTemp = Geometry.RetrieveEntity(secondGeo);
-                            if (firstGeoTemp is LineGeometry line1)
-                            {
-                                if (secondGeoTemp is LineGeometry line2)
-                                {
-                                    var firstEndPoint = line1.EndPoint2;
-                                    var secondStartPoint = line2.EndPoint1;
-                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
-                                    {
-                                        tempPoint = line2.Data.Point1;
-                                        line2.Data.Point1 = line2.Data.Point2;
-                                        line2.Data.Point2 = tempPoint;
-                                        line2.Selected = false;
-                                        line2.Commit();
-                                    }
-                                }
-                                if (secondGeoTemp is ArcGeometry arc2)
-                                {
-                                    var firstEndPoint = line1.EndPoint2;
-                                    var secondStartPoint = arc2.EndPoint1;
-                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
-                                    {
-                                        tempAngle = arc2.Data.StartAngleDegrees;
-                                        arc2.Data.StartAngleDegrees = arc2.Data.EndAngleDegrees;
-                                        arc2.Data.EndAngleDegrees = tempAngle;
-                                        arc2.Selected = false;
-                                        arc2.Commit();
-                                    }
-                                }
-                            }
-                            if (firstGeoTemp is ArcGeometry arc1)
-                            {
-                                if (secondGeoTemp is LineGeometry line2)
-                                {
-                                    var firstEndPoint = arc1.EndPoint2;
-                                    var secondStartPoint = line2.EndPoint1;
-                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
-                                    {
-                                        tempPoint = line2.Data.Point1;
-                                        line2.Data.Point1 = line2.Data.Point2;
-                                        line2.Data.Point2 = tempPoint;
-                                        line2.Selected = false;
-                                        line2.Commit();
-                                    }
-                                }
-                                if (secondGeoTemp is ArcGeometry arc2)
-                                {
-                                    var firstEndPoint = arc1.EndPoint2;
-                                    var secondStartPoint = arc2.EndPoint1;
-                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
-                                    {
-                                        tempAngle = arc2.Data.StartAngleDegrees;
-                                        arc2.Data.StartAngleDegrees = arc2.Data.EndAngleDegrees;
-                                        arc2.Data.EndAngleDegrees = tempAngle;
-                                        arc2.Selected = false;
-                                        arc2.Commit();
-                                    }
-                                }
-                            }
-                            firstGeo = chainGeo[i].GetEntityID();
-                            //Geometry.RetrieveEntity(firstGeo).Retrieve();
-                        }
-                    }
-                    var tempChainGeo = ChainManager.GetGeometryInChain(inChain);
-                    for (var i = 0; i < tempChainGeo.Length; i++)
-                    {
-                        tempChainGeo[i].Retrieve();
-                    }
-                    return inChain;
-                }
-                Chain chainFlipperCCW(Chain inChain)
-                {
-                    inChain.Direction = ChainDirectionType.CounterClockwise;
-                    var firstGeo = 0;
-                    var secondGeo = 0;
-                    var step = 0;
-                    var tempPoint = new Point3D(0, 0, 0);
-                    var tempAngle = 0.0;
-                    var chainGeo = ChainManager.GetGeometryInChain(inChain);
-                    if (step == 0)
-                    {
-                        firstGeo = chainGeo[0].GetEntityID();
-                        step = 1;
-                    }
-                    if (step == 1)
-                    {
-                        for (var i = 1; i < chainGeo.Length; i++)
-                        {
-                            secondGeo = chainGeo[i].GetEntityID();
-                            var firstGeoTemp = Geometry.RetrieveEntity(firstGeo);
-                            var secondGeoTemp = Geometry.RetrieveEntity(secondGeo);
-                            if (firstGeoTemp is LineGeometry line1)
-                            {
-                                if (secondGeoTemp is LineGeometry line2)
-                                {
-                                    var firstEndPoint = line1.EndPoint1;
-                                    var secondStartPoint = line2.EndPoint2;
-                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
-                                    {
-                                        tempPoint = line2.Data.Point2;
-                                        line2.Data.Point2 = line2.Data.Point1;
-                                        line2.Data.Point1 = tempPoint;
-                                        line2.Selected = false;
-                                        line2.Commit();
-                                    }
-                                }
-                                if (secondGeoTemp is ArcGeometry arc2)
-                                {
-                                    var firstEndPoint = line1.EndPoint1;
-                                    var secondStartPoint = arc2.EndPoint2;
-                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
-                                    {
-                                        tempAngle = arc2.Data.EndAngleDegrees;
-                                        arc2.Data.EndAngleDegrees = arc2.Data.StartAngleDegrees;
-                                        arc2.Data.StartAngleDegrees = tempAngle;
-                                        arc2.Selected = false;
-                                        arc2.Commit();
-                                    }
-                                }
-                            }
-                            if (firstGeoTemp is ArcGeometry arc1)
-                            {
-                                if (secondGeoTemp is LineGeometry line2)
-                                {
-                                    var firstEndPoint = arc1.EndPoint1;
-                                    var secondStartPoint = line2.EndPoint2;
-                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
-                                    {
-                                        tempPoint = line2.Data.Point2;
-                                        line2.Data.Point2 = line2.Data.Point1;
-                                        line2.Data.Point1 = tempPoint;
-                                        line2.Selected = false;
-                                        line2.Commit();
-                                    }
-                                }
-                                if (secondGeoTemp is ArcGeometry arc2)
-                                {
-                                    var firstEndPoint = arc1.EndPoint1;
-                                    var secondStartPoint = arc2.EndPoint2;
-                                    if (VectorManager.Distance(firstEndPoint, secondStartPoint) >= 0.001)
-                                    {
-                                        tempAngle = arc2.Data.EndAngleDegrees;
-                                        arc2.Data.EndAngleDegrees = arc2.Data.StartAngleDegrees;
-                                        arc2.Data.StartAngleDegrees = tempAngle;
-                                        arc2.Selected = false;
-                                        arc2.Commit();
-                                    }
-                                }
-                            }
-                            firstGeo = chainGeo[i].GetEntityID();
-                            //Geometry.RetrieveEntity(firstGeo).Retrieve();
-                        }
-                    }
-                    var tempChainGeo = ChainManager.GetGeometryInChain(inChain);
-                    for (var i = 0; i < tempChainGeo.Length; i++)
-                    {
-                        tempChainGeo[i].Retrieve();
-                    }
-                    return inChain;
-                }
                 var levelTenList1 = new List<Geometry>();
                 var level139List1 = new List<Geometry>();
                 var levelTenList2 = new List<Geometry>();
@@ -209,8 +29,6 @@ namespace _GeoAssistClimbSide
                 var chainList4 = new List<Chain>();
                 var chainList5 = new List<Chain>();
                 var chainList6 = new List<Chain>();
-                var testList = new List<Geometry>();
-
                 SelectionManager.UnselectAllGeometry();
                 LevelsManager.RefreshLevelsManager();
                 GraphicsManager.Repaint(true);
@@ -281,10 +99,8 @@ namespace _GeoAssistClimbSide
                         return; }
                 }
 
-                //Check for splines
                 foreach (var chain in selectedCutChain)
                     {
-                        chain.Direction = ChainDirectionType.Clockwise;
                         var chainGeos = ChainManager.GetGeometryInChain(chain);
                         foreach (var entity in chainGeos)
                         {
@@ -325,20 +141,18 @@ namespace _GeoAssistClimbSide
                 chain139Side2();
 
 
-                //Chain level 10 side 1
                 void chain10Side1()
                 {
                     foreach (var chain in chainList1)
                     {
-                        chain.Direction = ChainDirectionType.Clockwise;
-                        var mainGeoSide2 = chain.OffsetChain2D(OffsetSideType.Right, .002, OffsetRollCornerType.None, .5, false, .005, false);
+                        var mainGeoSide2 = chain.OffsetChain2D(OffsetSideType.Right, .002, OffsetRollCornerType.All, .5, false, .005, false);
                         var resultChainGeo = SearchManager.GetResultGeometry();
                         foreach (var entity in resultChainGeo)
                         {
                             entity.Color = mainGeo;
                             entity.Level = mainGeo;
                             entity.Selected = false;
-                            levelTenList2.Add(entity);
+                            levelTenList1.Add(entity);
                             entity.Commit();
                         }
                         foreach (var entity1 in resultChainGeo)
@@ -362,7 +176,7 @@ namespace _GeoAssistClimbSide
                                             {
                                                 newFillet.Retrieve();
                                                 newFillet.Commit();
-                                                levelTenList2.Add(newFillet);
+                                                levelTenList1.Add(newFillet);
                                             }
                                             line1.Retrieve();
                                             line1.Commit();
@@ -372,22 +186,22 @@ namespace _GeoAssistClimbSide
                                     }
                                     if (entity2 is ArcGeometry arc2 && entity1.GetEntityID() != entity2.GetEntityID())
                                     {
-                                        if (arc2.Data.Radius > 0.002) { 
-
+                                        if (arc2.Data.Radius > 0.002)
+                                        {
                                             if ((VectorManager.Distance(line1.EndPoint1, arc2.EndPoint1) <= 0.0001)
-                                            ||
-                                            (VectorManager.Distance(line1.EndPoint1, arc2.EndPoint2) <= 0.0001)
-                                            ||
-                                            (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint2) <= 0.0001)
-                                            ||
-                                            (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint1) <= 0.0001))
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint1, arc2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint2) <= 0.0001)
+                                                ||
+                                                (VectorManager.Distance(line1.EndPoint2, arc2.EndPoint1) <= 0.0001))
                                             {
                                                 var newFillet = GeometryManipulationManager.FilletTwoCurves(line1, arc2, 0.0020, mainGeo, mainGeo, true);
                                                 if (newFillet != null)
                                                 {
                                                     newFillet.Retrieve();
                                                     newFillet.Commit();
-                                                    levelTenList2.Add(newFillet);
+                                                    levelTenList1.Add(newFillet);
                                                 }
                                                 line1.Retrieve();
                                                 line1.Commit();
@@ -402,7 +216,6 @@ namespace _GeoAssistClimbSide
                             {
                                 if (arc1.Data.Radius > 0.002)
                                 {
-
                                     foreach (var entity2 in resultChainGeo)
                                     {
                                         if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
@@ -420,7 +233,7 @@ namespace _GeoAssistClimbSide
                                                 {
                                                     newFillet.Retrieve();
                                                     newFillet.Commit();
-                                                    levelTenList2.Add(newFillet);
+                                                    levelTenList1.Add(newFillet);
                                                 }
                                                 arc1.Retrieve();
                                                 arc1.Commit();
@@ -432,17 +245,16 @@ namespace _GeoAssistClimbSide
                                 }
                             }
                         }
-                        var thisChain102 = ChainManager.ChainGeometry(levelTenList2.ToArray());
-                        foreach (var draftChain10 in thisChain102)
+                        var thisChain1 = ChainManager.ChainGeometry(levelTenList1.ToArray());
+                        foreach (var draftChain1 in thisChain1)
                         {
-                            draftChain10.Direction = ChainDirectionType.Clockwise;
-                            var draftSurface10 = SurfaceDraftInterop.CreateDrafts(draftChain10, roughSurfaceDraftParams1, false, 1);
-                            foreach (var surface10 in draftSurface10)
+                            var draftSurface1 = SurfaceDraftInterop.CreateDrafts(draftChain1, roughSurfaceDraftParams1, false, 1);
+                            foreach (var surface1 in draftSurface1)
                             {
-                                if (Geometry.RetrieveEntity(surface10) is Geometry roughDraftSurface10)
+                                if (Geometry.RetrieveEntity(surface1) is Geometry roughDraftSurface1)
                                 {
-                                    roughDraftSurface10.Level = roughSurf;
-                                    roughDraftSurface10.Commit();
+                                    roughDraftSurface1.Level = roughSurf;
+                                    roughDraftSurface1.Commit();
                                 }
                             }
                         }
@@ -450,12 +262,10 @@ namespace _GeoAssistClimbSide
                     GraphicsManager.ClearColors(new GroupSelectionMask(true));
                     SelectionManager.UnselectAllGeometry();
                 }
-                //chain level 10 side 2
                 void chain10Side2()
                 {
                     foreach (var chain in chainList2)
                     {
-                        chain.Direction = ChainDirectionType.Clockwise;
                         var mainGeoSide2 = chain.OffsetChain2D(OffsetSideType.Left, .002, OffsetRollCornerType.All, .5, false, .005, false);
                         var resultChainGeo = SearchManager.GetResultGeometry();
                         foreach (var entity in resultChainGeo)
@@ -527,7 +337,6 @@ namespace _GeoAssistClimbSide
                             {
                                 if (arc1.Data.Radius > 0.002)
                                 {
-
                                     foreach (var entity2 in resultChainGeo)
                                     {
                                         if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
@@ -560,7 +369,6 @@ namespace _GeoAssistClimbSide
                         var thisChain102 = ChainManager.ChainGeometry(levelTenList2.ToArray());
                         foreach (var draftChain10 in thisChain102)
                         {
-                            draftChain10.Direction = ChainDirectionType.Clockwise;
                             var draftSurface10 = SurfaceDraftInterop.CreateDrafts(draftChain10, roughSurfaceDraftParams2, false, 1);
                             foreach (var surface10 in draftSurface10)
                             {
@@ -575,12 +383,11 @@ namespace _GeoAssistClimbSide
                     GraphicsManager.ClearColors(new GroupSelectionMask(true));
                     SelectionManager.UnselectAllGeometry();
                 }
-                //chain level 12 side 1
                 void chain12Side1()
                 {
                     foreach (var chain in chainList3)
                     {
-                        var cleanOutSide2 = chain.OffsetChain2D(OffsetSideType.Right, .0025, OffsetRollCornerType.None, .5, false, .005, false);
+                        var cleanOutSide1 = chain.OffsetChain2D(OffsetSideType.Right, .0025, OffsetRollCornerType.All, .5, false, .005, false);
                         var resultChainGeo = SearchManager.GetResultGeometry();
                         foreach (var entity in resultChainGeo)
                         {
@@ -682,7 +489,6 @@ namespace _GeoAssistClimbSide
                     GraphicsManager.ClearColors(new GroupSelectionMask(true));
                     SelectionManager.UnselectAllGeometry();
                 }
-                //chain level 12 side 2
                 void chain12Side2()
                 {
                     foreach (var chain in chainList4)
@@ -789,18 +595,17 @@ namespace _GeoAssistClimbSide
                     GraphicsManager.ClearColors(new GroupSelectionMask(true));
                     SelectionManager.UnselectAllGeometry();
                 }
-                //Chain level 139 side 1
                 void chain139Side1()
                 {
-                    foreach (var chain in chainList5)
+                    foreach (var chain in chainList6)
                     {
-                        var finishSurfSide2 = chain.OffsetChain2D(OffsetSideType.Right, .0005, OffsetRollCornerType.None, .5, false, .005, false);
+                        var finishSurfSide1 = chain.OffsetChain2D(OffsetSideType.Right, .0005, OffsetRollCornerType.All, .5, false, .005, false);
                         var resultChainGeo = SearchManager.GetResultGeometry();
                         foreach (var entity in resultChainGeo)
                         {
                             entity.Color = finishSurf;
                             entity.Level = finishSurf;
-                            entity.Selected = false;
+                            entity.Selected = true;
                             level139List2.Add(entity);
                             entity.Commit();
                         }
@@ -837,7 +642,6 @@ namespace _GeoAssistClimbSide
                                     {
                                         if (arc2.Data.Radius > 0.0005)
                                         {
-
                                             if ((VectorManager.Distance(line1.EndPoint1, arc2.EndPoint1) <= 0.0001)
                                                 ||
                                                 (VectorManager.Distance(line1.EndPoint1, arc2.EndPoint2) <= 0.0001)
@@ -867,18 +671,17 @@ namespace _GeoAssistClimbSide
                             {
                                 if (arc1.Data.Radius > 0.0005)
                                 {
-
                                     foreach (var entity2 in resultChainGeo)
                                     {
                                         if (entity2 is LineGeometry line2 && entity1.GetEntityID() != entity2.GetEntityID())
                                         {
-                                            if ((VectorManager.Distance(arc1.EndPoint1, line2.EndPoint1) <= 0.0001)
+                                            if ((VectorManager.Distance(arc1.EndPoint1, line2.EndPoint1) <= 0.001)
                                                 ||
-                                                (VectorManager.Distance(arc1.EndPoint1, line2.EndPoint2) <= 0.0001)
+                                                (VectorManager.Distance(arc1.EndPoint1, line2.EndPoint2) <= 0.001)
                                                 ||
-                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint2) <= 0.0001)
+                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint2) <= 0.001)
                                                 ||
-                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint1) <= 0.0001))
+                                                (VectorManager.Distance(arc1.EndPoint2, line2.EndPoint1) <= 0.001))
                                             {
                                                 var newFillet = GeometryManipulationManager.FilletTwoCurves(arc1, line2, 0.0005, finishSurf, finishSurf, true);
                                                 if (newFillet != null)
@@ -895,14 +698,11 @@ namespace _GeoAssistClimbSide
                                         }
                                     }
                                 }
-
                             }
                         }
                         var thisChain1392 = ChainManager.ChainGeometry(level139List2.ToArray());
                         foreach (var draftChain139 in thisChain1392)
-
                         {
-                            draftChain139.Direction = ChainDirectionType.Clockwise;
                             var draftSurface139 = SurfaceDraftInterop.CreateDrafts(draftChain139, finishSurfaceDraftParams1, false, 1);
                             foreach (var surface139 in draftSurface139)
                             {
@@ -917,7 +717,6 @@ namespace _GeoAssistClimbSide
                     GraphicsManager.ClearColors(new GroupSelectionMask(true));
                     SelectionManager.UnselectAllGeometry();
                 }
-                //Chain level 139 side 2
                 void chain139Side2()
                 {
                     foreach (var chain in chainList6)
@@ -1025,9 +824,7 @@ namespace _GeoAssistClimbSide
                         }
                         var thisChain1392 = ChainManager.ChainGeometry(level139List2.ToArray());
                         foreach (var draftChain139 in thisChain1392)
-
                         {
-                            draftChain139.Direction = ChainDirectionType.Clockwise;
                             var draftSurface139 = SurfaceDraftInterop.CreateDrafts(draftChain139, finishSurfaceDraftParams2, false, 1);
                             foreach (var surface139 in draftSurface139)
                             {
